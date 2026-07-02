@@ -6,86 +6,72 @@ const PORT = 4346;
 
 app.use(express.json());
 
-// Serve static files (including zones.json if it's in the same folder)
+// Serve static files
 app.use(express.static(__dirname));
 
-// Global storage array in RAM
-let positionsRAM = [];
+// Use a Map for O(1) read/write/update performance
+const positionsMap = new Map();
 
-// Helper function to wipe out records older than 2 hours (7,200,000 milliseconds)
-function clearExpiredPositions() {
-    positionsRAM = positionsRAM.filter(
-        item => item.serverTimestamp > Date.now() - (2 * 60 * 60 * 1000)
-    );
-}
+// Background worker: Cleans up expired entries every minute
+// Prevents API requests from being slowed down by data cleanup
+setInterval(() => {
+    const expiryThreshold = Date.now() - (2 * 60 * 60 * 1000); // 2 hours
+    for (const [name, data] of positionsMap.entries()) {
+        if (data.serverTimestamp < expiryThreshold) {
+            positionsMap.delete(name);
+        }
+    }
+}, 60 * 1000);
 
-// GET: Return active positions and current server time
+// GET: Returns positions exactly as expected by your Flutter _positions list
 app.get('/positions', (req, res) => {
-    clearExpiredPositions();
-
     res.json({
-        positions: positionsRAM.map(({ serverTimestamp, ...rest }) => rest),
-             currentTime: Date.now()
+        positions: Array.from(positionsMap.values()),
+        currentTime: Date.now()
     });
 });
 
 // POST: Add or update a position
 app.post('/positions', (req, res) => {
-    clearExpiredPositions();
-
     const { name, position, building, roof, direction, user } = req.body;
 
-    // Validation
+    // Strict validation
     if (!name || !position || !building || !roof || !direction || !user) {
-        return res.status(400).json({
-            error: 'Missing required fields.'
-        });
+        return res.status(400).json({ error: 'Missing required fields.' });
     }
 
-    const rawNow = Date.now();
-
-    const newEntry = {
+    const now = Date.now();
+    
+    // Update or Insert logic is now instant via Map
+    const entry = {
         name,
         position,
         building,
         roof,
         direction,
         user,
-        time: rawNow,
-        serverTimestamp: rawNow
+        serverTimestamp: now // Used by the background interval
     };
 
-    const existingIndex = positionsRAM.findIndex(
-        item => item.name === name
-    );
+    positionsMap.set(name, entry);
 
-    if (existingIndex !== -1) {
-        positionsRAM[existingIndex] = newEntry;
-    } else {
-        positionsRAM.push(newEntry);
-    }
-
-    const { serverTimestamp, ...publicReceipt } = newEntry;
-
+    // Respond with a status code 201 so the Flutter logic triggers _fetchPositions()
     res.status(201).json({
         message: 'Position successfully registered.',
-        entry: publicReceipt
+        entry: entry
     });
 });
 
-// Explicit endpoint for zones.json
+// Explicit endpoints for your assets
 app.get('/zones.json', (req, res) => {
     res.sendFile(path.join(__dirname, 'zones.json'));
 });
 
-// Optional alias
 app.get('/zones', (req, res) => {
     res.sendFile(path.join(__dirname, 'zones.json'));
 });
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`COPE RAM Server running on port ${PORT} using raw timestamps`);
-    console.log(`Positions API: http://localhost:${PORT}/positions`);
-    console.log(`Zones JSON:    http://localhost:${PORT}/zones.json`);
+    console.log(`COPE Production-Ready Server running on port ${PORT}`);
 });
