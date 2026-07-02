@@ -7,7 +7,8 @@
         [213, 133],
         [123, 2132]
       ],
-      "roofCount": 3
+      "roofCount": 3,
+      "CustomRoof":[]
     },
     "T1": {
       "positions": [
@@ -16,16 +17,18 @@
         [613, 333],
         [723, 232]
       ],
-      "roofCount": 5
+      "roofCount": 5,
+      "CustomRoof":[]
     },
     "T4": {
       "positions": [
-     	[1829.9,1559.4],
-       	[1977.4,1570.8],
-      	[1976.3,1617.0],
-     [1830.7,1607.7]
+      [1829.9,1559.4],
+      [1977.4,1570.8],
+      [1976.3,1617.0],
+      [1830.7,1607.7]
       ],
-      "roofCount": 3
+      "roofCount": 3,
+      "CustomRoof":[["CancelarieEt0"],["MagazieEt0"],[MagazieEt1],[CancelarieEt2]]
     }
   }
 }
