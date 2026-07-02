@@ -25,25 +25,30 @@ setInterval(() => {
 app.get('/positions', (req, res) => {
     res.json({
         positions: Array.from(positionsMap.values()),
-        currentTime: Date.now()
+             currentTime: Date.now()
     });
 });
 
 // POST: Add or update a position
 app.post('/positions', (req, res) => {
     const { name, position, building, roof, direction, user } = req.body;
-    
-    // Validation[cite: 2]
-    if (!name || !position || !building || !roof || !direction || !user) {
+
+    // Validation: Require all fields except 'direction', which can be null
+    if (!name || !position || !building || !roof || !user) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const now = Date.now();
-    positionsMap.set(name, { 
-        name, position, building, roof, direction, user, 
-        time: now, serverTimestamp: now 
+    positionsMap.set(name, {
+        name,
+        position,
+        building,
+        roof,
+        direction: direction ?? null, // Explicitly set to null if missing or undefined
+        user,
+        serverTimestamp: now
     });
-    
+
     res.status(201).json({ message: 'Success' });
 });
 
