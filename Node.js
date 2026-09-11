@@ -10,6 +10,14 @@ app.use(express.json());
 // Serve static files from the current directory
 app.use(express.static(__dirname));
 
+// Logging middleware — helps debug silent POST failures
+app.use((req, res, next) => {
+    if (req.method === 'POST') {
+        console.log(`${req.method} ${req.url} →`, req.body);
+    }
+    next();
+});
+
 // Use a Map for O(1) performance
 const positionsMap = new Map();
 
@@ -33,8 +41,18 @@ app.get('/positions', (req, res) => {
 app.post('/positions', (req, res) => {
     const { name, position, building, roof, direction, user } = req.body;
 
-    // Validation: Require all fields except 'direction', which can be null
-    if (!name || !position || !building || !roof || !user) {
+    // Validation:
+    //  - name, position, building, user must be non-empty strings
+    //  - roof must be present (may be an empty string for Open Area)
+    const missingRequired =
+        !name ||
+        !position ||
+        !building ||
+        !user ||
+        roof === undefined ||
+        roof === null;
+
+    if (missingRequired) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -43,8 +61,8 @@ app.post('/positions', (req, res) => {
         name,
         position,
         building,
-        roof,
-        direction: direction ?? null, // Explicitly set to null if missing or undefined
+        roof,                          // keep "" as-is for Open Area
+        direction: direction ?? null,  // Explicitly set to null if missing or undefined
         user,
         serverTimestamp: now
     });
