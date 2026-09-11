@@ -21,11 +21,11 @@ setInterval(() => {
     }
 }, 60000);
 
-// GET: Returns positions exactly as expected by your Flutter _positions list[cite: 1, 2]
+// GET: Returns positions exactly as expected by your Flutter _positions list
 app.get('/positions', (req, res) => {
     res.json({
         positions: Array.from(positionsMap.values()),
-             currentTime: Date.now()
+        currentTime: Date.now()
     });
 });
 
@@ -52,9 +52,14 @@ app.post('/positions', (req, res) => {
     res.status(201).json({ message: 'Success' });
 });
 
-// Explicit endpoint to ensure zones.json is served correctly[cite: 2]
+// Explicit endpoint to ensure zones.json is served correctly
 app.get('/zones.json', (req, res) => {
     res.sendFile(path.join(__dirname, 'zones.json'));
+});
+
+// Explicit endpoint to ensure cadets.json is served correctly
+app.get('/cadets.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'cadets.json'));
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
