@@ -16,7 +16,9 @@
   [1619.2, 1121.4]
 ],
     "roofCount": 3,
-    "CustomRoof": []
+    "CustomRoof": [
+      ["Cancelarie"]
+    ]
     },
     "T": {
       "positions": [
